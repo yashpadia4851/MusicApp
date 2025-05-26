@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/utils/cn";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createNoise3D } from "simplex-noise";
 
 export const WavyBackground = ({
@@ -35,6 +35,8 @@ export const WavyBackground = ({
     ctx: any,
     canvas: any;
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [animationId, setAnimationId] = useState<number>(0);
+
   const getSpeed = () => {
     switch (speed) {
       case "slow":
@@ -46,7 +48,7 @@ export const WavyBackground = ({
     }
   };
 
-  const init = () => {
+  const init = useCallback(() => {
     canvas = canvasRef.current;
     ctx = canvas.getContext("2d");
     w = ctx.canvas.width = window.innerWidth;
@@ -59,7 +61,7 @@ export const WavyBackground = ({
       ctx.filter = `blur(${blur}px)`;
     };
     render();
-  };
+  }, [blur]);
 
   const waveColors = colors ?? [
     "#38bdf8",
@@ -83,21 +85,20 @@ export const WavyBackground = ({
     }
   };
 
-  let animationId: number;
-  const render = () => {
+  const render = useCallback(() => {
     ctx.fillStyle = backgroundFill || "black";
     ctx.globalAlpha = waveOpacity || 0.5;
     ctx.fillRect(0, 0, w, h);
     drawWave(5);
-    animationId = requestAnimationFrame(render);
-  };
+    setAnimationId(requestAnimationFrame(render));
+  }, [backgroundFill, waveOpacity]);
 
   useEffect(() => {
     init();
     return () => {
       cancelAnimationFrame(animationId);
     };
-  }, []);
+  }, [init, animationId]);
 
   const [isSafari, setIsSafari] = useState(false);
   useEffect(() => {
